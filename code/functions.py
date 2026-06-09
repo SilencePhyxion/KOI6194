@@ -1,17 +1,17 @@
-import pandas as pd, numpy as np, lightkurve as lk, exoplanet as xo, astropy.units as u, multiprocessing as mp
+import pandas as pd, numpy as np, lightkurve as lk, astropy.units as u, multiprocessing as mp
 import matplotlib.pyplot as plt, matplotlib.pylab as pylab, matplotlib.gridspec as gridspec
-import arviz as az, pickle, corner, csv
-import pymc3 as pm, pymc3_ext as pmx, aesara_theano_fallback.tensor as tt
+# import arviz as az, pickle, corner, csv,exoplanet as xo,
+# import pymc3 as pm, pymc3_ext as pmx, aesara_theano_fallback.tensor as tt
 
-from astropy.io import fits
-from scipy import signal
-from sinusoid import SinusoidModel
-from astropy.timeseries import LombScargle
-from astropy.table import Table
-from functions import * # <-- self-defined functions
-from IPython.display import display, Math
-from celerite2.theano import terms, GaussianProcess
-from PIL import Image
+# from astropy.io import fits
+# from scipy import signal
+# from sinusoid import SinusoidModel
+# from astropy.timeseries import LombScargle
+# from astropy.table import Table
+# from functions import * # <-- self-defined functions
+# from IPython.display import display, Math
+# from celerite2.theano import terms, GaussianProcess
+# from PIL import Image
 
 def model_sampling(model, map_soln, tune, draws, cores, chains, seed):
     with model:
@@ -354,15 +354,16 @@ def GaussianChecking(data_arr,Lower_xlim, Upper_xlim, PlotNumber, figX, figY,mas
 
 def plot_og_data(time, flux, t_BKJD, rv, rv_err):
 
-    fig_data, axes = plt.subplots(1,figsize=(50, 10))
+    fig_data, axes = plt.subplots(1,figsize=(20, 8))
 
-    font = 40
+    font = 20
+    markersize = 10
     ax2 = axes.twinx()
-    p1, = axes.plot(time,flux, ".k",markersize=20.0,label='Kepler')
+    p1, = axes.plot(time,flux, ".k",markersize=markersize,label='Kepler')
     axes.set_ylabel('Normalized Flux',fontsize=font)
     axes.set_xlabel('Time [BKJD - 2454833]',fontsize=font)
 
-    p2, = ax2.plot(t_BKJD, rv,'.b',markersize=20.0,label='Keck/HIRES',zorder=100)
+    p2, = ax2.plot(t_BKJD, rv,'.b',markersize=2*markersize,label='Keck/HIRES',zorder=100)
     ax2.errorbar(t_BKJD, rv, yerr=rv_err,fmt='None',elinewidth=3.0)
     ax2.set_ylabel("Radial Velocity [m/s]",fontsize=font)
     axes.tick_params(axis='both', which='major', labelsize=font)
