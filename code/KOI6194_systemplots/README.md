@@ -1,0 +1,17 @@
+Code that combines measured obliquity results from the following to create the survey of multiplayer exoplanet systems:
+- exoplanet archive
+- https://www.astro.keele.ac.uk/jkt/tepcat/obliquity.html
+- Kepler-56:
+  - Kepler-56 b:
+    - https://ui.adsabs.harvard.edu/abs/2024ApJS..270....8W/abstract
+    - https://ui.adsabs.harvard.edu/abs/2019AJ....158..138S/abstract
+    - https://ui.adsabs.harvard.edu/abs/2013Sci...342..331H/abstract
+  - Kepler-56 c:
+    - https://ui.adsabs.harvard.edu/abs/2024ApJS..270....8W/abstract
+    - https://ui.adsabs.harvard.edu/abs/2019AJ....158..138S/abstract
+    - https://ui.adsabs.harvard.edu/abs/2013Sci...342..331H/abstract
+- Kepler-432:
+  - Kpeler-432 b:
+    - https://ui.adsabs.harvard.edu/abs/2015ApJ...803...49Q/abstract
+  - Kepler-432 c:
+    - https://ui.adsabs.harvard.edu/abs/2015ApJ...803...49Q/abstract 
