@@ -76,7 +76,7 @@ def GravRelation(numax,T):
 def GravUnc(numax,numax_err,T,T_err):
     return GravRelation(numax,T) * np.sqrt((numax_err/numax)**2 + ((1/2) * T_err/T)**2)
 
-def GaussianChecking(Lower_xlim, Upper_xlim, PlotNumber, figX, figY,mask,extras0,map_soln0,save=True,name=""):
+def GaussianChecking(Lower_xlim, Upper_xlim, PlotNumber, figX, figY,mask,extras0,map_soln0, markersize = 15, lw=4, tick_size = 16, save=True,name=""):
     if mask is None:
         mask = np.ones(len(time_cull), dtype=bool)
     else:
@@ -89,6 +89,7 @@ def GaussianChecking(Lower_xlim, Upper_xlim, PlotNumber, figX, figY,mask,extras0
     gp_mod = extras0["gp_pred"] + map_soln0["mean"] # type: ignore
 
     fig, axes = plt.subplots(cols,rows, figsize=(figX,figY), sharex=False, sharey=True)
+
     for index in range(PlotNumber):
         col = index // rows
         row = index % rows
@@ -96,14 +97,14 @@ def GaussianChecking(Lower_xlim, Upper_xlim, PlotNumber, figX, figY,mask,extras0
         if index == 3: # data is chopped too late for this one, skip it
             j += 1 
         ax = axes[col, row]
-        ax.plot(time_cull[mask], flux_cull[mask], ".k", label="data")
-        ax.plot(time_cull[mask], gp_mod, color="C2", label="gp model")
+        ax.plot(time_cull[mask], flux_cull[mask], ".k", markersize=markersize, label="data")
+        ax.plot(time_cull[mask], gp_mod, color="C2", lw=lw, label="gp model")
         ax.plot(
-        time_cull[mask],(map_soln0["light_curves"][:,0])[mask]+1,lw=2,label="Transit Model",color="r" # type: ignore
+        time_cull[mask],(map_soln0["light_curves"][:,0])[mask]+1,lw=lw,label="Transit Model",color="r" # type: ignore
         )
         ax.legend(loc='lower right',fontsize=15)
         ax.set_xlim(Initial_Limits[0] + j *p, Initial_Limits[1] + j *p)
-        ax.tick_params(axis='both', which='major', labelsize=fontsize)
+        ax.tick_params(axis='both', which='major', labelsize=tick_size)
     fig.text(0.53, 0.04, "Time [BKJD - 2454833]", ha='center', fontsize=25)
     fig.text(-0.015, 0.5, "Relative flux", va='center', rotation='vertical', fontsize=25)
 
@@ -170,8 +171,119 @@ def plot_light_curve(data_arr, lightcurve, day_filter, og_map_soln, map_soln, ex
     figure.text(0.53, -0.03, "Phase (Days)", ha='center', fontsize=35)
     plt.tight_layout()
     if save==True:
-        figure.savefig('ASTERO+Transit+GPTransit.png', facecolor='w',bbox_inches='tight')
+        figure.savefig('ASTERO+Transit+GPTransit.pdf', facecolor='w',bbox_inches='tight')
     return 
+
+def plot_GP_and_transit(
+    Lower_xlim, Upper_xlim, PlotNumber, figX, figY,
+    data_arr, lightcurve, day_filter,
+    og_map_soln, map_soln, extras,
+    mask=None, save=True, name="ASTERO+Transit+GPTransit.pdf"
+):
+    time_cull, flux_cull, flux_err_cull = data_arr
+
+    if mask is None:
+        mask = np.ones(len(time_cull), dtype=bool)
+
+    p = og_map_soln["period"][0]
+    t0 = og_map_soln["t0"][0]
+    transit_model = og_map_soln["light_curves"][:, 0] + 1
+    gp_mod = extras["gp_pred"] + map_soln["mean"]
+    fontsize=15
+    lw = 4
+    scatter_size = 15
+
+    Initial_Limits = np.array([Lower_xlim, Upper_xlim])
+
+    # Figure layout
+    fig = plt.figure(figsize=(figX, figY))
+    gs = fig.add_gridspec(2, 1, hspace=0.2)
+
+    gs_top = gs[0].subgridspec(1, PlotNumber, wspace=0.08)
+    gs_bottom = gs[1].subgridspec(1, 2, wspace=0.08)
+
+    axes_top = [fig.add_subplot(gs_top[0, i]) for i in range(PlotNumber)]
+    axes_bottom = [fig.add_subplot(gs_bottom[0, i]) for i in range(2)]
+
+    # Individual GP models at transit epochs
+    for index, ax in enumerate(axes_top):
+        j = index
+
+        if index == 3:
+            j += 1
+
+        ax.plot(time_cull[mask], flux_cull[mask], ".k", markersize=scatter_size-6, label="data")
+        ax.plot(time_cull[mask], gp_mod[mask], color="C2", lw=lw, label="gp model")
+        ax.plot(time_cull[mask], transit_model[mask],
+                color="r", lw=lw, label="Transit Model")
+
+        ax.set_xlim(Initial_Limits[0] + j*p, Initial_Limits[1] + j*p)
+        ax.tick_params(axis="both", which="major", labelsize=fontsize)
+
+        if j == 1:
+            ax.legend(loc="lower right", fontsize=15)
+            ax.tick_params(axis="both", which="major",labelleft=False)
+
+
+    # Phase-folded photometry
+    x_fold = (time_cull - t0 + 0.5*p) % p - 0.5*p
+
+    inds = np.argsort(x_fold)
+    inds = inds[np.abs(x_fold[inds]) < day_filter]
+
+    # Original photometry
+    ax = axes_bottom[0]
+    ax.scatter(x_fold, flux_cull, s=scatter_size)
+
+    binned = lightcurve.fold(
+        period=p, epoch_time=t0
+    ).bin(.008).remove_outliers()
+
+    ax.scatter(binned.time.value, binned.flux,
+               label="binned", s=scatter_size, zorder=2)
+
+    ax.plot(x_fold[inds], transit_model[inds],
+            label="model", zorder=1000, color="C3", lw=lw)
+
+    # GP-subtracted photometry
+    ax = axes_bottom[1]
+    gp_scaled = flux_cull - gp_mod
+
+    ax.scatter(x_fold, gp_scaled + 1, s=scatter_size)
+
+    lcgp = lk.LightCurve(
+        time=time_cull,
+        flux=gp_scaled,
+        flux_err=flux_err_cull
+    ).fold(period=p, epoch_time=t0).bin(0.008)
+
+    ax.scatter(lcgp.time.value, lcgp.flux.value + 1,
+               label="binned",  s=scatter_size, zorder=2)
+
+    ax.plot(x_fold[inds], transit_model[inds],
+            label="model", zorder=1000, color="C3", lw=lw)
+
+    # Formatting
+    for m, ax in enumerate(axes_bottom):
+        ax.set_xlim(-1, 1)
+        ax.set_ylim(0.9985, 1.0015)
+        ax.tick_params(axis="both", which="major", labelsize=fontsize)
+        if m == len(axes_bottom)-1:
+            ax.legend(loc="lower right", fontsize=20)
+
+    axes_bottom[1].set_yticks([])
+
+    fig.text(0.5, 0.48, "Time [BKJD - 2454833]",
+             ha="center", fontsize=25)
+    fig.text(0.5, 0.05, "Phase (Days)",
+             ha="center", fontsize=25)
+    fig.supylabel("Relative flux", fontsize=25, x=0.05)
+
+    plt.tight_layout()
+    if save:
+        fig.savefig(name, facecolor="w", bbox_inches="tight")
+
+    return fig
 
 def MAPFitting(dat_arr,rv_dat_arr,map_soln,extras,mask):
     time_cull, flux_cull, flux_err_cull = dat_arr
@@ -248,7 +360,7 @@ def MAPFitting(dat_arr,rv_dat_arr,map_soln,extras,mask):
     ax.legend()
     ax.set_ylabel('radial velocity [m/s]')
     _ = ax.set_xlabel('Phase')
-    fig.savefig('ASTERO+MAP TransitRV.png', facecolor='w')
+    fig.savefig('ASTERO+MAP TransitRV.pdf', facecolor='w')
     # plt.close()
 
     #plotting the RVs only
@@ -264,7 +376,7 @@ def MAPFitting(dat_arr,rv_dat_arr,map_soln,extras,mask):
     ax_rv.set_title("4 Years of Keck/HIRES Data",fontsize=14)
     ax_rv.tick_params(axis='both', which='major', labelsize=14)
     plt.tight_layout(rect=[0, 0.05, 1, 1])  # Leave space for the xlabel
-    fig_RV.savefig('MAP_RV.png',dpi=100, facecolor='w',bbox_inches='tight')
+    fig_RV.savefig('MAP_RV.pdf',dpi=100, facecolor='w',bbox_inches='tight')
 
     #RV model and plots
     fig, axes = plt.subplots(4,1,figsize=(16, 12),sharey=False, sharex=False)
@@ -312,7 +424,7 @@ def MAPFitting(dat_arr,rv_dat_arr,map_soln,extras,mask):
     ax.legend()
     ax.set_ylabel('radial velocity [m/s]')
     ax.set_xlabel('Phase')
-    fig.savefig('ASTERO+MAP RV.png', facecolor='w')
+    fig.savefig('ASTERO+MAP RV.pdf', facecolor='w')
     return 
 
 def GaussianChecking(data_arr,Lower_xlim, Upper_xlim, PlotNumber, figX, figY,mask,extras0,map_soln0,save=True,name=""):
@@ -349,7 +461,8 @@ def GaussianChecking(data_arr,Lower_xlim, Upper_xlim, PlotNumber, figX, figY,mas
 
     plt.tight_layout(rect=[0, 0.05, 1, 1]) 
     if save==True:
-        fig.savefig(name, facecolor='w',dpi=100,bbox_inches='tight')
+        print("Figure saved.")
+        fig.savefig(name, facecolor='w',bbox_inches='tight')
     return
 
 def plot_og_data(time, flux, t_BKJD, rv, rv_err):
@@ -371,4 +484,5 @@ def plot_og_data(time, flux, t_BKJD, rv, rv_err):
 
     lines = [p1,p2]
     _ = axes.legend(lines, [l.get_label() for l in lines],fontsize=font)
-    fig_data.savefig('Data.png',facecolor='w',dpi=100, bbox_inches='tight')
+    plt.tight_layout()
+    fig_data.savefig('Data.pdf', facecolor='w', bbox_inches='tight')
