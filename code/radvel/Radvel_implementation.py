@@ -22,13 +22,13 @@ anybasis_params['e1'] = radvel.Parameter(value=0.16 ) #e = 0.16         # eccent
 anybasis_params['w1'] = radvel.Parameter(value=np.pi/2.)      # argument of periastron of the star's orbit for 1st planet
 # anybasis_params['sesinw1'] = radvel.Parameter(value=0.00)
 anybasis_params['k1'] = radvel.Parameter(value=38.925)          # velocity semi-amplitude for 1st planet
-anybasis_params['per2'] = radvel.Parameter(value=63.38)      # same parameters for 2nd planet ...
+anybasis_params['per2'] = radvel.Parameter(value=64.01)      # same parameters for 2nd planet ...
 anybasis_params['tc2'] = radvel.Parameter(value=2458216)
 anybasis_params['e2'] = radvel.Parameter(value=0.28) #e = 0.28
 # anybasis_params['sesinw2'] = radvel.Parameter(value=0.00)
 anybasis_params['w2'] = radvel.Parameter(value=np.pi/2.)
 anybasis_params['k2'] = radvel.Parameter(value=40.509)
-anybasis_params['per3'] = radvel.Parameter(value=431.7)      # same parameters for 3rd planet ...
+anybasis_params['per3'] = radvel.Parameter(value=400.23)      # same parameters for 3rd planet ... # 431.7
 anybasis_params['tc3'] = radvel.Parameter(value=2458437)
 anybasis_params['e3'] = radvel.Parameter(value=0.07) #e = 0.07
 # anybasis_params['sesinw3'] = radvel.Parameter(value=0.00)
@@ -56,8 +56,8 @@ params['per1'].vary = False
 
 # Load radial velocity data,must have 'time', 'mnvel', 'errvel', and 'tel' keys
 # the velocities are expected to be in m/s
-data = pd.read_csv('lightkurveandexoplanet/k06194_rv_mod_cull.csv')
-
+data = pd.read_csv('k06194_rv_mod_radvel.csv')
+# data["tel"] = "hires_j"
 # Define prior shapes and widths here.
 priors = [
     radvel.prior.EccentricityPrior( nplanets ),           # Keeps eccentricity < 1
@@ -66,6 +66,8 @@ priors = [
     radvel.prior.Gaussian('gamma_hires_j', 0.0, 10.0),
     radvel.prior.Gaussian('tc2', params['tc2'].value, 300.0),
     radvel.prior.Gaussian('tc3', params['tc3'].value, 300.0),
+    radvel.prior.Gaussian('per2', params['per2'].value, 50.0),
+    radvel.prior.Gaussian('per3', params['per3'].value, 50.0),
 ]
 
 # optional argument that can contain stellar mass in solar units (mstar) and
