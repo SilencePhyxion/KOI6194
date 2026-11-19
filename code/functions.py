@@ -231,18 +231,18 @@ def plot_light_curve(data_arr, lightcurve, day_filter, og_map_soln, map_soln, ex
     # Plot the folded data
     ax = axes[0]
     x_fold_map0= (time_cull - t0_map0 + 0.5 * p_map0) % p_map0 - 0.5 * p_map0
-    ax.scatter(x_fold_map0, flux_cull)
+    ax.scatter(x_fold_map0, flux_cull, s=100, color='k')
     
     #binned data
     binned = lightcurve.fold(period=p_map0, epoch_time=t0_map0).bin(.008).remove_outliers()
     flux_binned = binned.flux
     time_binned = binned.time.value
-    ax.scatter(time_binned,flux_binned, label='binned', zorder=2)
+    ax.scatter(time_binned,flux_binned, label='binned', s=100, zorder=2)
     
     #plotting folded model
     inds = np.argsort(x_fold_map0) #organises the time data in increasing order
     inds = inds[np.abs(x_fold_map0)[inds] < day_filter]
-    ax.plot(x_fold_map0[inds], (other_map0+1)[inds], label="model",zorder=1000,color="C3",lw=4)
+    ax.plot(x_fold_map0[inds], (other_map0+1)[inds], label="model",zorder=1000,color="red",lw=4)
 
     ax.legend(loc="lower right",fontsize=35)
     ax.tick_params(axis='both', which='major', labelsize=35)
@@ -252,17 +252,17 @@ def plot_light_curve(data_arr, lightcurve, day_filter, og_map_soln, map_soln, ex
     # Plot the folded data
     ax = axes[1]
     gp_scaled = flux_cull-gp_mod
-    ax.scatter(x_fold_map0, gp_scaled+1)
+    ax.scatter(x_fold_map0, gp_scaled+1, s=100, color='k')
     #binned data
     lcgp = lk.LightCurve(time=time_cull, flux=gp_scaled,flux_err=flux_err_cull-gp_mod).fold(period=p_map0, epoch_time=t0_map0).bin(0.008) # type: ignore
     flux_gp = lcgp.flux.value
     time_gp = lcgp.time.value
-    ax.scatter(time_gp,flux_gp+1, label='binned', zorder=2)
+    ax.scatter(time_gp,flux_gp+1, label='binned', s=100, zorder=2)
 
     #plotting folded model
     inds = np.argsort(x_fold_map0) #organises the time data in increasing order
     inds = inds[np.abs(x_fold_map0)[inds] < day_filter]
-    ax.plot(x_fold_map0[inds], (other_map0+1)[inds], label="model",zorder=1000,color="C3",lw=4)
+    ax.plot(x_fold_map0[inds], (other_map0+1)[inds], label="model",zorder=1000,color="red",lw=4)
     # ax.set_xlabel('Phase')
     ax.set_ylabel('')
     ax.set_yticks([])
@@ -509,7 +509,7 @@ def plot_GP_and_transit(
     gp_mod = extras["gp_pred"] + map_soln["mean"]
     fontsize=15
     lw = 4
-    scatter_size = 15
+    scatter_size = 45
 
     Initial_Limits = np.array([Lower_xlim, Upper_xlim])
 
@@ -530,7 +530,7 @@ def plot_GP_and_transit(
         if index == 3:
             j += 1
 
-        ax.plot(time_cull[mask], flux_cull[mask], ".k", markersize=scatter_size-6, label="data")
+        ax.plot(time_cull[mask], flux_cull[mask], ".k", markersize=scatter_size/3-6, label="data")
         ax.plot(time_cull[mask], gp_mod[mask], color="C2", lw=lw, label="gp model")
         ax.plot(time_cull[mask], transit_model[mask],
                 color="r", lw=lw, label="Transit Model")
@@ -551,7 +551,7 @@ def plot_GP_and_transit(
 
     # Original photometry
     ax = axes_bottom[0]
-    ax.scatter(x_fold, flux_cull, s=scatter_size)
+    ax.scatter(x_fold, flux_cull, c='k', s=scatter_size)
 
     binned = lightcurve.fold(
         period=p, epoch_time=t0
@@ -567,7 +567,7 @@ def plot_GP_and_transit(
     ax = axes_bottom[1]
     gp_scaled = flux_cull - gp_mod
 
-    ax.scatter(x_fold, gp_scaled + 1, s=scatter_size)
+    ax.scatter(x_fold, gp_scaled + 1, c='k', s=scatter_size)
 
     lcgp = lk.LightCurve(
         time=time_cull,
